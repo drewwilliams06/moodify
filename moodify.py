@@ -39,7 +39,7 @@ class slider:
 
 
 """
-Get all songs from a spotify client.
+Get all saved songs from a spotify client.
 sp - a spotify client
 Returns a list of dictionaries.
 """
@@ -52,6 +52,57 @@ def fetchAllSongs(sp):
         i+=1
     return songs
 
+
+def playlistToTag(playlist):
+    print("empty")
+
+'''
+Returns a list of songs
+songs - a list of dicts
+'''
+def songsToTag(songs):
+    print('empty')
+
+'''
+Returns dictionary from tags.txt
+tags.txt is formatted as follows:
+{tagname: [track1, track2, ..., trackn], tagname2: ...}
+'''
+def importTags():
+    #make sure tags.txt exists by opening and closing
+    tagfile = open('tags.txt','w')
+    tagfile.close()
+
+    tagfile = open('tags.txt','r')
+    if len(tagfile.read())!=0:
+        return eval(tagfile.read())
+    else:
+        print("No tags found.")
+        return {}
+
+'''
+tags - dict of tags (tag is a list of track dicts) 
+tagname - name of tag to be added
+'''
+def addTag(tags,tagname):
+    tags[tagname]=[]
+    return tags
+
+'''
+tags - core dict of tags
+songs - list of song dicts to be added to the tags
+taglist - list of tag strings to add songs to
+'''
+def addSongsToTag(tags,songs,taglist):
+    for song in songs: #loop through each song dict to be added
+        for tagname in taglist: #loop through each string representing a tag
+            found=False
+            for track in tags[tagname]: #loop through each track already in the tag to make sure no duplicates
+                if track['track']['uri']==song['track']['uri']: found=True 
+            if not found: tags[tagname].append(song)
+    return tags
+
+#def tagFromPlaylist(tags)
 
 '''
 Get all playlists from a spotify client.
@@ -66,6 +117,18 @@ def fetchAllPlaylists(sp,username):
         playlists+=(results['items'])
         i+=1
     return playlists
+
+'''
+playlist - spotify dict
+'''
+def songsFromPlaylist(sp,playlist):
+    songs=[]
+    i=0
+    while i==0 or len(results['items'])>0:
+        results = sp.user_playlist_tracks(limit=50,offset=i*50)
+        songs+=(results['items'])
+        i+=1
+    return songs
 
 
 '''
@@ -101,10 +164,19 @@ def main(args):
     token = util.prompt_for_user_token(username,scope,client_id=client_id,client_secret=client_secret,redirect_uri=redirect_uri)
     if token:
         sp = spotipy.Spotify(auth=token)
+        print("getting songs")
         songs=fetchAllSongs(sp)
         dispSongs(songs)
+        print("getting playlists")
         playlists=fetchAllPlaylists(sp,username)
         dispPlaylists(playlists)
+        print("importing tags")
+        tags = importTags()
+        print("complete")
+        tags=addTag(tags,"rap")
+        print("tags: %s" % tags)
+        tags=addSongsToTag(tags,[songs[0],songs[1],songs[2]],['rap'])
+        dispSongs(tags['rap'])
         
         
     
